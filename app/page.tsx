@@ -1,65 +1,101 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+
+type Person = {
+  id: string;
+  name: string;
+  gender: string;
+  birth_year: number | null;
+  death_year: number | null;
+  photo_url: string | null;
+  occupation: string | null;
+};
 
 export default function Home() {
+  const [jokbo-persons, setPersons] = useState<Person[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPersons();
+  }, []);
+
+  const fetchPersons = async () => {
+    const { data } = await supabase
+      .from('jokbo-persons')
+      .select('id, name, gender, birth_year, death_year, photo_url, occupation')
+      .order('birth_year', { ascending: true });
+    setPersons(data || []);
+    setLoading(false);
+  };
+
+  const filtered = jokbo-persons.filter(p =>
+    p.name.includes(search)
+  );
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="min-h-screen bg-amber-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 가족 족보</h1>
+            <p className="text-amber-700 mt-1">총 {jokbo-persons.length}명</p>
+          </div>
+          <Link href="/add">
+            <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition">
+              + 인물 추가
+            </button>
+          </Link>
+        </div>
+
+        {/* 검색 */}
+        <input
+          type="text"
+          placeholder="이름으로 검색..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full border border-amber-300 rounded-xl px-4 py-3 mb-6 text-lg focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* 인물 목록 */}
+        {loading ? (
+          <p className="text-center text-amber-700">불러오는 중...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-amber-700">등록된 인물이 없습니다.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filtered.map(person => (
+              <Link href={`/person/${person.id}`} key={person.id}>
+                <div className="bg-white rounded-2xl p-4 shadow hover:shadow-md transition cursor-pointer border border-amber-100">
+                  {/* 사진 */}
+                  <div className="w-full aspect-square rounded-xl overflow-hidden bg-amber-100 mb-3 flex items-center justify-center">
+                    {person.photo_url ? (
+                      <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-4xl">
+                        {person.gender === 'male' ? '👴' : person.gender === 'female' ? '👵' : '👤'}
+                      </span>
+                    )}
+                  </div>
+                  {/* 정보 */}
+                  <h2 className="font-bold text-amber-900 text-center text-lg">{person.name}</h2>
+                  <p className="text-amber-600 text-center text-sm">
+                    {person.birth_year && `${person.birth_year}년생`}
+                    {person.death_year && ` ~ ${person.death_year}`}
+                  </p>
+                  {person.occupation && (
+                    <p className="text-amber-500 text-center text-xs mt-1">{person.occupation}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
