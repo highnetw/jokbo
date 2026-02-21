@@ -116,8 +116,8 @@ export function buildTreeData(
   const familyChildren = new Map<string, Set<string>>();
   filteredPersons.forEach(p => {
     const rep = getRepId(p.id);
-    if (!familyChildren.has(rep)) familyChildren.set(rep, new Set());
-    (childrenOf.get(p.id) || new Set()).forEach(childId => {
+    if (!familyChildren.has(rep)) familyChildren.set(rep, new Set<string>());
+    (childrenOf.get(p.id) || new Set<string>()).forEach((childId: string) => {
       familyChildren.get(rep)!.add(childId);
     });
   });
