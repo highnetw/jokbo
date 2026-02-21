@@ -15,7 +15,7 @@ type Person = {
 };
 
 export default function Home() {
-  const [jokbo-persons, setPersons] = useState<Person[]>([]);
+  const [persons, setPersons] = useState<Person[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -25,14 +25,14 @@ export default function Home() {
 
   const fetchPersons = async () => {
     const { data } = await supabase
-      .from('jokbo-persons')
+      .from('jokbo_persons')
       .select('id, name, gender, birth_year, death_year, photo_url, occupation')
       .order('birth_year', { ascending: true });
     setPersons(data || []);
     setLoading(false);
   };
 
-  const filtered = jokbo-persons.filter(p =>
+  const filtered = persons.filter(p =>
     p.name.includes(search)
   );
 
@@ -43,7 +43,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 가족 족보</h1>
-            <p className="text-amber-700 mt-1">총 {jokbo-persons.length}명</p>
+            <p className="text-amber-700 mt-1">총 {persons.length}명</p>
           </div>
           <Link href="/add">
             <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition">

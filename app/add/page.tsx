@@ -65,7 +65,7 @@ export default function AddPerson() {
     }
 
     // 인물 저장
-    const { error } = await supabase.from('jokbo-persons').insert([{
+    const { error } = await supabase.from('jokbo_persons').insert([{
       name: form.name.trim(),
       gender: form.gender,
       birth_year: form.birth_year ? parseInt(form.birth_year) : null,
