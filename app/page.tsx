@@ -46,7 +46,7 @@ export default function Home() {
           <div className="flex gap-2">
             <Link href="/tree">
               <button className="bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-700 transition">
-                🌳 계보도
+                🌳 계보TREE
               </button>
             </Link>
             <Link href="/add">
