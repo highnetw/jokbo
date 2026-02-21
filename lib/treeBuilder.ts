@@ -180,11 +180,11 @@ export function buildTreeData(
     if (visited.has(repId)) return NODE_W;
     visited.add(repId);
     const spouseId = coupleMap.get(repId);
-    const children = Array.from(familyChildren.get(repId) || new Set<string>());
+    const children: string[] = Array.from(familyChildren.get(repId) || new Set<string>());
     const coupleW = spouseId ? NODE_W * 2 + H_GAP : NODE_W;
     if (children.length === 0) return coupleW;
     let childrenTotalW = 0;
-    children.forEach((childId, i) => {
+    children.forEach((childId: string, i) => {
       childrenTotalW += getSubtreeWidth(getRepId(childId), new Set(visited));
       if (i < children.length - 1) childrenTotalW += H_GAP;
     });
@@ -203,12 +203,12 @@ export function buildTreeData(
       placed.add(spouseId);
       posMap.set(spouseId, { x: startX + NODE_W + H_GAP, y });
     }
-    const children = Array.from(familyChildren.get(repId) || new Set<string>());
+    const children: string[] = Array.from(familyChildren.get(repId) || new Set<string>());
     if (children.length === 0) return;
-    const childWidths = children.map(childId => getSubtreeWidth(getRepId(childId)));
+    const childWidths = children.map((childId: string) => getSubtreeWidth(getRepId(childId)));
     const totalChildW = childWidths.reduce((a, b) => a + b, 0) + H_GAP * (children.length - 1);
     let cx = centerX - totalChildW / 2;
-    children.forEach((childId, i) => {
+    children.forEach((childId: string, i) => {
       const childRep = getRepId(childId);
       const childDepth = displayDepth.get(childId) ?? depth + 1;
       if (!placed.has(childRep)) placeSubtree(childRep, cx + childWidths[i] / 2, childDepth);
