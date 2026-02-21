@@ -32,9 +32,7 @@ export default function Home() {
     setLoading(false);
   };
 
-  const filtered = persons.filter(p =>
-    p.name.includes(search)
-  );
+  const filtered = persons.filter(p => p.name.includes(search));
 
   return (
     <main className="min-h-screen bg-amber-50 p-6">
@@ -45,11 +43,23 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 가족 족보</h1>
             <p className="text-amber-700 mt-1">총 {persons.length}명</p>
           </div>
-          <Link href="/add">
-            <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition">
-              + 인물 추가
-            </button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/tree">
+              <button className="bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-700 transition">
+                🌳 계보도
+              </button>
+            </Link>
+            <Link href="/add">
+              <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition">
+                + 인물 추가
+              </button>
+            </Link>
+            <Link href="/admin">
+              <button className="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition text-sm">
+                ⚙️
+              </button>
+            </Link>
+          </div>
         </div>
 
         {/* 검색 */}
@@ -71,7 +81,6 @@ export default function Home() {
             {filtered.map(person => (
               <Link href={`/person/${person.id}`} key={person.id}>
                 <div className="bg-white rounded-2xl p-4 shadow hover:shadow-md transition cursor-pointer border border-amber-100">
-                  {/* 사진 */}
                   <div className="w-full aspect-square rounded-xl overflow-hidden bg-amber-100 mb-3 flex items-center justify-center">
                     {person.photo_url ? (
                       <img src={person.photo_url} alt={person.name} className="w-full h-full object-cover" />
@@ -81,7 +90,6 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  {/* 정보 */}
                   <h2 className="font-bold text-amber-900 text-center text-lg">{person.name}</h2>
                   <p className="text-amber-600 text-center text-sm">
                     {person.birth_year && `${person.birth_year}년생`}
