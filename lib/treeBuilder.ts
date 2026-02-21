@@ -180,7 +180,7 @@ export function buildTreeData(
     if (visited.has(repId)) return NODE_W;
     visited.add(repId);
     const spouseId = coupleMap.get(repId);
-    const children = Array.from(familyChildren.get(repId) || new Set());
+    const children = Array.from(familyChildren.get(repId) || new Set<string>());
     const coupleW = spouseId ? NODE_W * 2 + H_GAP : NODE_W;
     if (children.length === 0) return coupleW;
     let childrenTotalW = 0;
@@ -203,7 +203,7 @@ export function buildTreeData(
       placed.add(spouseId);
       posMap.set(spouseId, { x: startX + NODE_W + H_GAP, y });
     }
-    const children = Array.from(familyChildren.get(repId) || new Set());
+    const children = Array.from(familyChildren.get(repId) || new Set<string>());
     if (children.length === 0) return;
     const childWidths = children.map(childId => getSubtreeWidth(getRepId(childId)));
     const totalChildW = childWidths.reduce((a, b) => a + b, 0) + H_GAP * (children.length - 1);
