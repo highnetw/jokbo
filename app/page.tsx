@@ -40,7 +40,7 @@ export default function Home() {
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 친척 구성원/h1>
+            <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 친척 구성원</h1>
             <p className="text-amber-700 mt-1">총 {persons.length}명</p>
           </div>
           <div className="flex gap-2">
