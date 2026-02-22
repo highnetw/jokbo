@@ -23,7 +23,7 @@ const V_GAP = 120;
 export function buildTreeData(
   persons: PersonRow[],
   rels: RelRow[],
-  centerPersonId?: string  // 지정하면 이 사람 중심으로만 필터
+  centerPersonId?: string
 ): { nodes: Node[]; edges: Edge[] } {
 
   // ── 중심 인물 기준 필터링 ──────────────────────────────
@@ -33,28 +33,35 @@ export function buildTreeData(
   if (centerPersonId) {
     const includeIds = new Set<string>();
 
-    // 관계 맵 (전체 기준으로 먼저 구성)
     const coupleMapFull = new Map<string, string>();
     const childrenOfFull = new Map<string, Set<string>>();
     const parentsOfFull = new Map<string, Set<string>>();
 
+    // 전체 관계 맵 구성 (son/daughter + father/mother 모두 처리)
     rels.forEach(r => {
       if (r.relation_type === 'husband' || r.relation_type === 'wife') {
         coupleMapFull.set(r.person_id, r.related_person_id);
         coupleMapFull.set(r.related_person_id, r.person_id);
       }
+
+      let parentId: string | null = null;
+      let childId: string | null = null;
       if (r.relation_type === 'son' || r.relation_type === 'daughter') {
-        if (!childrenOfFull.has(r.person_id)) childrenOfFull.set(r.person_id, new Set());
-        childrenOfFull.get(r.person_id)!.add(r.related_person_id);
-        if (!parentsOfFull.has(r.related_person_id)) parentsOfFull.set(r.related_person_id, new Set());
-        parentsOfFull.get(r.related_person_id)!.add(r.person_id);
+        parentId = r.person_id; childId = r.related_person_id;
+      } else if (r.relation_type === 'father' || r.relation_type === 'mother') {
+        parentId = r.related_person_id; childId = r.person_id;
+      }
+      if (parentId && childId) {
+        if (!childrenOfFull.has(parentId)) childrenOfFull.set(parentId, new Set());
+        childrenOfFull.get(parentId)!.add(childId);
+        if (!parentsOfFull.has(childId)) parentsOfFull.set(childId, new Set());
+        parentsOfFull.get(childId)!.add(parentId);
       }
     });
 
-    // 위로: 부모 → 조부모 → 증조부모 (최대 3세대 위)
+    // 위로: 부모 → 조부모 → 증조부모 (최대 3세대)
     const addAncestors = (id: string, depth: number) => {
       includeIds.add(id);
-      // 배우자도 포함
       const spouse = coupleMapFull.get(id);
       if (spouse) includeIds.add(spouse);
       if (depth <= 0) return;
@@ -63,7 +70,7 @@ export function buildTreeData(
       });
     };
 
-    // 아래로: 자녀 → 손자 → 증손자 (최대 3세대 아래)
+    // 아래로: 자녀 → 손자 → 증손자 (최대 3세대)
     const addDescendants = (id: string, depth: number) => {
       includeIds.add(id);
       const spouse = coupleMapFull.get(id);
@@ -77,14 +84,31 @@ export function buildTreeData(
     addAncestors(centerPersonId, 3);
     addDescendants(centerPersonId, 3);
 
+    // ── 형제자매 추가 ──────────────────────────────────
+    // 중심인물의 부모를 찾고 → 부모의 모든 자녀 = 형제자매
+    const myParents = parentsOfFull.get(centerPersonId) || new Set<string>();
+    myParents.forEach(parentId => {
+      (childrenOfFull.get(parentId) || new Set<string>()).forEach(siblingId => {
+        includeIds.add(siblingId);
+        // 형제자매의 배우자도 포함
+        const siblingSpouse = coupleMapFull.get(siblingId);
+        if (siblingSpouse) includeIds.add(siblingSpouse);
+        // 형제자매의 자녀(조카)도 포함
+        (childrenOfFull.get(siblingId) || new Set<string>()).forEach(nephewId => {
+          includeIds.add(nephewId);
+          const nephewSpouse = coupleMapFull.get(nephewId);
+          if (nephewSpouse) includeIds.add(nephewSpouse);
+        });
+      });
+    });
+
     filteredPersons = persons.filter(p => includeIds.has(p.id));
     filteredRels = rels.filter(r =>
       includeIds.has(r.person_id) && includeIds.has(r.related_person_id)
     );
   }
 
-  // ── 이하 기존 buildTree 로직 (filteredPersons/rels 사용) ──
-
+  // ── 부부 관계 맵 ──────────────────────────────────────
   const coupleMap = new Map<string, string>();
   const couples = new Set<string>();
   filteredRels.forEach(r => {
@@ -96,23 +120,45 @@ export function buildTreeData(
     }
   });
 
+  // ── 부모-자녀 관계 맵 (son/daughter + father/mother 모두 처리) ──
   const childrenOf = new Map<string, Set<string>>();
   const parentsOf = new Map<string, Set<string>>();
   filteredRels.forEach(r => {
+    let parentId: string | null = null;
+    let childId: string | null = null;
+
     if (r.relation_type === 'son' || r.relation_type === 'daughter') {
-      if (!childrenOf.has(r.person_id)) childrenOf.set(r.person_id, new Set());
-      childrenOf.get(r.person_id)!.add(r.related_person_id);
-      if (!parentsOf.has(r.related_person_id)) parentsOf.set(r.related_person_id, new Set());
-      parentsOf.get(r.related_person_id)!.add(r.person_id);
+      parentId = r.person_id;
+      childId = r.related_person_id;
+    } else if (r.relation_type === 'father' || r.relation_type === 'mother') {
+      parentId = r.related_person_id;
+      childId = r.person_id;
+    }
+
+    if (parentId && childId) {
+      if (!childrenOf.has(parentId)) childrenOf.set(parentId, new Set());
+      childrenOf.get(parentId)!.add(childId);
+      if (!parentsOf.has(childId)) parentsOf.set(childId, new Set());
+      parentsOf.get(childId)!.add(parentId);
     }
   });
 
+  // ── 생년 조회 헬퍼 ────────────────────────────────────
+  const personMap = new Map<string, PersonRow>();
+  filteredPersons.forEach(p => personMap.set(p.id, p));
+
+  const getBirthYear = (id: string): number => {
+    return personMap.get(id)?.birth_year ?? 9999;
+  };
+
+  // ── 대표 ID (부부 중 알파벳 작은 쪽) ─────────────────
   const getRepId = (id: string) => {
     const spouse = coupleMap.get(id);
     if (!spouse) return id;
     return [id, spouse].sort()[0];
   };
 
+  // ── 가족 단위 자녀 맵 ─────────────────────────────────
   const familyChildren = new Map<string, Set<string>>();
   filteredPersons.forEach(p => {
     const rep = getRepId(p.id);
@@ -122,7 +168,13 @@ export function buildTreeData(
     });
   });
 
-  // depth 계산 (위상정렬)
+  // ── 자녀 배열을 생년 오름차순으로 정렬 ───────────────
+  const getSortedChildren = (repId: string): string[] => {
+    return Array.from(familyChildren.get(repId) || new Set<string>())
+      .sort((a, b) => getBirthYear(a) - getBirthYear(b));
+  };
+
+  // ── depth 계산 (위상정렬) ─────────────────────────────
   const depthMap = new Map<string, number>();
   const roots = filteredPersons.filter(p => !parentsOf.has(p.id));
 
@@ -146,7 +198,7 @@ export function buildTreeData(
     });
   }
 
-  // displayDepth (배우자 y좌표 보정)
+  // ── displayDepth (배우자 y좌표 보정) ─────────────────
   const displayDepth = new Map<string, number>(depthMap);
   filteredPersons.forEach(p => { if (!displayDepth.has(p.id)) displayDepth.set(p.id, 0); });
 
@@ -172,7 +224,7 @@ export function buildTreeData(
     });
   }
 
-  // 레이아웃 배치
+  // ── 레이아웃 배치 ─────────────────────────────────────
   const posMap = new Map<string, { x: number; y: number }>();
   const placed = new Set<string>();
 
@@ -180,7 +232,7 @@ export function buildTreeData(
     if (visited.has(repId)) return NODE_W;
     visited.add(repId);
     const spouseId = coupleMap.get(repId);
-    const children: string[] = Array.from(familyChildren.get(repId) || new Set<string>());
+    const children = getSortedChildren(repId);
     const coupleW = spouseId ? NODE_W * 2 + H_GAP : NODE_W;
     if (children.length === 0) return coupleW;
     let childrenTotalW = 0;
@@ -203,7 +255,7 @@ export function buildTreeData(
       placed.add(spouseId);
       posMap.set(spouseId, { x: startX + NODE_W + H_GAP, y });
     }
-    const children: string[] = Array.from(familyChildren.get(repId) || new Set<string>());
+    const children = getSortedChildren(repId);
     if (children.length === 0) return;
     const childWidths = children.map((childId: string) => getSubtreeWidth(getRepId(childId)));
     const totalChildW = childWidths.reduce((a, b) => a + b, 0) + H_GAP * (children.length - 1);
@@ -216,13 +268,16 @@ export function buildTreeData(
     });
   };
 
+  // roots 생년 오름차순 정렬
+  const sortedRoots = [...roots].sort((a, b) => (a.birth_year ?? 9999) - (b.birth_year ?? 9999));
+
   let curX = NODE_W;
-  roots.forEach(root => {
+  sortedRoots.forEach(root => {
     const rep = getRepId(root.id);
     if (!placed.has(rep)) {
       const w = getSubtreeWidth(rep);
       placeSubtree(rep, curX + w / 2, 0);
-      curX += w + H_GAP * 3;
+      curX += w + H_GAP * 6;
     }
   });
 
@@ -234,7 +289,7 @@ export function buildTreeData(
     }
   });
 
-  // 노드
+  // ── 노드 생성 ─────────────────────────────────────────
   const newNodes: Node[] = filteredPersons.map(p => ({
     id: p.id,
     type: 'person',
@@ -250,10 +305,11 @@ export function buildTreeData(
     },
   }));
 
-  // 엣지
+  // ── 엣지 생성 ─────────────────────────────────────────
   const newEdges: Edge[] = [];
   const addedEdges = new Set<string>();
 
+  // 부부 엣지
   couples.forEach(key => {
     const [a, b] = key.split('|');
     newEdges.push({
@@ -267,15 +323,27 @@ export function buildTreeData(
     });
   });
 
+  // 부모-자녀 엣지 (son/daughter + father/mother 모두 처리, 중복 제거)
   filteredRels.forEach(r => {
+    let parentId: string | null = null;
+    let childId: string | null = null;
+
     if (r.relation_type === 'son' || r.relation_type === 'daughter') {
-      const edgeId = `child-${r.person_id}-${r.related_person_id}`;
+      parentId = r.person_id;
+      childId = r.related_person_id;
+    } else if (r.relation_type === 'father' || r.relation_type === 'mother') {
+      parentId = r.related_person_id;
+      childId = r.person_id;
+    }
+
+    if (parentId && childId) {
+      const edgeId = `child-${parentId}-${childId}`;
       if (!addedEdges.has(edgeId)) {
         addedEdges.add(edgeId);
         newEdges.push({
           id: edgeId,
-          source: r.person_id,
-          target: r.related_person_id,
+          source: parentId,
+          target: childId,
           type: 'smoothstep',
           style: { stroke: '#92400e', strokeWidth: 1.5 },
           markerEnd: { type: MarkerType.ArrowClosed, color: '#92400e' },

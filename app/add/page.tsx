@@ -5,15 +5,23 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+const FAMILY_TREES = [
+  { id: 'woo_family',  label: '우정형 패밀리' },
+  { id: 'kim_family',  label: '김억조 패밀리' },
+  { id: 'min_family',  label: '민천금 부친 패밀리' },
+  { id: 'kwon_family', label: '권두오 부친 패밀리' },
+];
+
 export default function AddPerson() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [familyTreeIds, setFamilyTreeIds] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     name: '',
-    gender: 'unknown',
+    gender: 'male',
     birth_year: '',
     death_year: '',
     photo_year: '',
@@ -25,6 +33,12 @@ export default function AddPerson() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleFamilyTree = (id: string) => {
+    setFamilyTreeIds(prev =>
+      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+    );
   };
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,11 +58,10 @@ export default function AddPerson() {
 
     let photo_url = null;
 
-    // 사진 업로드
     if (photoFile) {
       const ext = photoFile.name.split('.').pop();
       const fileName = `${Date.now()}.${ext}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('jokbo-photos')
         .upload(fileName, photoFile);
 
@@ -64,7 +77,6 @@ export default function AddPerson() {
       photo_url = urlData.publicUrl;
     }
 
-    // 인물 저장
     const { error } = await supabase.from('jokbo_persons').insert([{
       name: form.name.trim(),
       gender: form.gender,
@@ -76,6 +88,7 @@ export default function AddPerson() {
       address: form.address || null,
       occupation: form.occupation || null,
       notes: form.notes || null,
+      family_tree_ids: familyTreeIds.length > 0 ? familyTreeIds : null,
     }]);
 
     if (error) {
@@ -125,17 +138,66 @@ export default function AddPerson() {
             />
           </div>
 
-          {/* 성별 */}
+          {/* 성별 - 라디오 버튼 */}
           <div>
             <label className="text-sm font-medium text-amber-800">성별</label>
-            <select
-              name="gender" value={form.gender} onChange={handleChange}
-              className="w-full border border-amber-200 rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
-            >
-              <option value="unknown">미지정</option>
-              <option value="male">남성</option>
-              <option value="female">여성</option>
-            </select>
+            <div className="flex gap-3 mt-2">
+              {[
+                { value: 'male',    label: '👨 남성' },
+                { value: 'female',  label: '👩 여성' },
+                { value: 'unknown', label: '❓ 미지정' },
+              ].map(opt => (
+                <label
+                  key={opt.value}
+                  className={`flex-1 text-center py-2.5 rounded-xl border-2 cursor-pointer font-medium text-sm transition
+                    ${form.gender === opt.value
+                      ? 'border-amber-500 bg-amber-100 text-amber-800'
+                      : 'border-amber-200 bg-white text-gray-500 hover:border-amber-300'}`}
+                >
+                  <input
+                    type="radio"
+                    name="gender"
+                    value={opt.value}
+                    checked={form.gender === opt.value}
+                    onChange={handleChange}
+                    className="hidden"
+                  />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 패밀리 - 체크박스 */}
+          <div>
+            <label className="text-sm font-medium text-amber-800">패밀리</label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {FAMILY_TREES.map(f => (
+                <label
+                  key={f.id}
+                  className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-2 cursor-pointer text-sm font-medium transition
+                    ${familyTreeIds.includes(f.id)
+                      ? 'border-amber-500 bg-amber-100 text-amber-800'
+                      : 'border-amber-200 bg-white text-gray-500 hover:border-amber-300'}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={familyTreeIds.includes(f.id)}
+                    onChange={() => handleFamilyTree(f.id)}
+                    className="hidden"
+                  />
+                  <span className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0
+                    ${familyTreeIds.includes(f.id) ? 'border-amber-500 bg-amber-500' : 'border-gray-300'}`}>
+                    {familyTreeIds.includes(f.id) && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </span>
+                  {f.label}
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* 출생/사망연도 */}
