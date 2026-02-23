@@ -12,6 +12,10 @@ type BackupData = {
 };
 
 export default function AdminPage() {
+/* 백업에 비번 내가 삽입 */
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+
   const [status, setStatus] = useState('');
   const [isError, setIsError] = useState(false);
   const [restorePreview, setRestorePreview] = useState<BackupData | null>(null);
@@ -21,6 +25,15 @@ export default function AdminPage() {
   const msg = (text: string, err = false) => {
     setStatus(text);
     setIsError(err);
+  };
+/* 내가 비번 백업 삽입 */
+    const handleLogin = () => {
+    if (passwordInput === '1103') {
+      setIsAuthenticated(true);
+    } else {
+      alert('비밀번호가 틀렸습니다!');
+      setPasswordInput('');
+    }
   };
 
   // ── 백업 ──────────────────────────────────────────────
@@ -131,7 +144,32 @@ export default function AdminPage() {
     setRestoreFile(null);
     setLoading(false);
   };
+/* 내가 비번 때문에 수정 */
+  // 👇 기존 return 위에 추가
+  if (!isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-amber-50 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-amber-900 mb-2">⚙️ 관리자 인증</h1>
+        <p className="text-amber-700 text-sm mb-6">비밀번호를 입력하세요</p>
+        <input
+          type="password"
+          value={passwordInput}
+          onChange={(e) => setPasswordInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          placeholder="비밀번호"
+          className="border border-amber-300 rounded-lg px-4 py-2 mb-4 text-center"
+        />
+        <button
+          onClick={handleLogin}
+          className="bg-amber-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-amber-700 transition"
+        >
+          확인
+        </button>
+      </main>
+    );
+  }
 
+  /*여기까지 내가 비번 때문에 수정 */
   return (
     <main className="min-h-screen bg-amber-50 p-6">
       <div className="max-w-lg mx-auto">

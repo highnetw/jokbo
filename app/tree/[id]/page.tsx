@@ -56,24 +56,23 @@ export default function CenterTreePage() {
             <button className="text-amber-700 hover:text-amber-900 font-medium">← 인물로</button>
           </Link>
           <Link href="/tree">
-            <button className="text-amber-500 hover:text-amber-700 text-sm">전체 계보도</button>
+            <button className="text-amber-500 hover:text-amber-700 text-sm">계보도</button>
           </Link>
         </div>
         <h1 className="text-xl font-bold text-amber-900">
-          🌳 {centerName} 중심 계보도
+          🌳 {centerName} 계보도
         </h1>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <span><span style={{color:'#3b82f6'}}>■</span> 남성</span>
-          <span><span style={{color:'#ec4899'}}>■</span> 여성</span>
-          <span><span style={{color:'#f59e0b'}}>- -</span> 부부</span>
-          <span><span style={{color:'#92400e'}}>→</span> 부모-자녀</span>
-        </div>
+        {/* {<div className="flex items-center gap-4 text-xs text-gray-500">
+          <span><span style={{ color: '#3b82f6' }}>■</span> 남성</span>
+          <span><span style={{ color: '#ec4899' }}>■</span> 여성</span>
+          <span><span style={{ color: '#f59e0b' }}>- -</span> 부부</span>
+          <span><span style={{ color: '#92400e' }}>→</span> 부모-자녀</span>
+        </div>} */}
       </div>
 
       {/* 중심 인물 안내 배너 */}
       <div className="bg-amber-100 border-b border-amber-200 px-6 py-2 text-center text-sm text-amber-700">
-        <span className="font-semibold">{centerName}</span> 기준 위로 3세대 · 아래로 3세대
-      </div>
+        <span className="font-semibold">{centerName}</span> 위아래로 3세대 </div>
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -91,6 +90,7 @@ export default function CenterTreePage() {
             fitViewOptions={{ padding: 0.2 }}
             minZoom={0.1}
             maxZoom={2}
+            nodesDraggable={false}   // 👈 이것만 추가
           >
             <Background color="#fde68a" gap={20} />
             <Controls />

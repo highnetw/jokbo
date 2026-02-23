@@ -127,7 +127,7 @@ export default function PersonDetail() {
       .eq('key', 'delete_password')
       .single();
 
-    const correctPassword = settings?.value || '1234';
+    const correctPassword = settings?.value || '1103';
 
     if (deletePassword !== correctPassword) {
       setDeleteError('비밀번호가 틀렸습니다.');

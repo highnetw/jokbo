@@ -36,32 +36,31 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-amber-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-amber-900">👨‍👩‍👧‍👦 우리 집안 구성원</h1>
-            <p className="text-amber-700 mt-1">총 {persons.length}명</p>
-          </div>
-          <div className="flex gap-2">
-            <Link href="/tree">
-              <button className="bg-green-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-green-700 transition">
-                🌳 계보TRee
-              </button>
-            </Link>
-            <Link href="/add">
-              <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition">
-                + 인물 추가
-              </button>
-            </Link>
-            <Link href="/admin">
-              <button className="bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-300 transition text-sm">
-                ⚙️
-              </button>
-            </Link>
-          </div>
-        </div>
+     <div className="max-w-4xl mx-auto">
+  {/* 제목 */}
+  <h1 className="text-2xl font-bold text-amber-900 text-center mb-1">FAMILY</h1>
+  <p className="text-amber-700 text-center mb-6">총 {persons.length}명</p>
 
+  {/* 버튼 행 */}
+  <div className="flex justify-between mb-8">
+    <Link href="/tree">
+      <button className="bg-green-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-green-700 transition">
+        🌳 가계도 열기
+      </button>
+    </Link>
+    <div className="flex gap-2">
+      <Link href="/add">
+        <button className="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-amber-700 transition">
+          인물 추가하기
+        </button>
+      </Link>
+      <Link href="/admin">
+        <button className="bg-gray-200 text-gray-600 px-2 py-1.5 rounded-xl font-medium hover:bg-gray-300 transition text-sm">
+          ⚙️
+        </button>
+      </Link>
+    </div>
+  </div>
         {/* 검색 */}
         <input
           type="text"
