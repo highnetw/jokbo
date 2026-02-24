@@ -8,6 +8,7 @@ type NodeData = {
   death_year: number | null;
   photo_url: string | null;
   isCenter?: boolean;
+  isHighlighted?: boolean;
 };
 
 export function PersonNode({ data }: { data: NodeData }) {
@@ -17,7 +18,9 @@ export function PersonNode({ data }: { data: NodeData }) {
   const borderColor = data.isCenter
     ? '#d97706'
     : isMale ? '#3b82f6' : isFemale ? '#ec4899' : '#9ca3af';
-  const shadow = data.isCenter
+  const shadow = data.isHighlighted
+    ? '0 0 0 4px #22c55e, 0 4px 16px rgba(34,197,94,0.6)'
+    : data.isCenter
     ? '0 0 0 3px #fbbf24, 0 4px 12px rgba(217,119,6,0.4)'
     : '0 2px 6px rgba(0,0,0,0.1)';
 

@@ -12,6 +12,8 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nodeTypes } from '@/components/PersonNode';
@@ -25,11 +27,14 @@ const FAMILY_TABS = [
   { id: 'kwon_family', label: '🌳 권두오 부친' },
 ];
 
-export default function TreePage() {
+function TreeInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFamily, setSelectedFamily] = useState('all');
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<{id: string, name: string}[]>([]);
+  const { fitView } = useReactFlow();
 
   const [allPersons, setAllPersons] = useState<PersonRow[]>([]);
   const [allRels, setAllRels] = useState<RelRow[]>([]);
@@ -77,6 +82,30 @@ export default function TreePage() {
 
   const selectedTab = FAMILY_TABS.find(t => t.id === selectedFamily);
 
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    if (!value.trim()) { setSearchResults([]); return; }
+    const results = allPersons.filter(p => p.name.includes(value)).sort((a, b) => a.name.localeCompare(b.name, 'ko')).slice(0, 20);
+    setSearchResults(results);
+  };
+
+  const handleSelectPerson = (personId: string) => {
+    setSearch('');
+    setSearchResults([]);
+    fitView({ nodes: [{ id: personId }], duration: 800, padding: 0.5 });
+    // 하이라이트
+    setNodes(nds => nds.map(n => ({
+      ...n,
+      data: { ...n.data, isHighlighted: n.id === personId },
+    })));
+    setTimeout(() => {
+      setNodes(nds => nds.map(n => ({
+        ...n,
+        data: { ...n.data, isHighlighted: false },
+      })));
+    }, 3000);
+  };
+
   return (
     <main className="w-screen h-screen bg-amber-50 flex flex-col">
 
@@ -88,6 +117,29 @@ export default function TreePage() {
         <h1 className="text-xl font-bold text-amber-900">
           🌳 {selectedFamily === 'all' ? ' 계보도 (전체)' : `${selectedTab?.label} 계보도`}
         </h1>
+        {/* 검색창 */}
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={e => handleSearch(e.target.value)}
+            placeholder="이름 검색..."
+            className="border border-amber-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-36"
+          />
+          {searchResults.length > 0 && (
+            <div className="absolute right-0 top-10 bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-64 overflow-y-auto">
+              {searchResults.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handleSelectPerson(p.id)}
+                  className="w-full text-left px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 first:rounded-t-xl last:rounded-b-xl"
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {/* {<div className="flex items-center gap-4 text-xs text-gray-500">
           <span><span style={{ color: '#3b82f6' }}>■</span> 남성</span>
           <span><span style={{ color: '#ec4899' }}>■</span> 여성</span>
@@ -143,5 +195,13 @@ export default function TreePage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function TreePage() {
+  return (
+    <ReactFlowProvider>
+      <TreeInner />
+    </ReactFlowProvider>
   );
 }
