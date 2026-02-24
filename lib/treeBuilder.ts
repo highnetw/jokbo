@@ -349,6 +349,22 @@ export function buildTreeData(
           markerEnd: { type: MarkerType.ArrowClosed, color: '#92400e' },
         });
       }
+      // 배우자도 같은 자녀와 자동 연결
+      const spouseId = coupleMap.get(parentId);
+      if (spouseId) {
+        const spouseEdgeId = `child-${spouseId}-${childId}`;
+        if (!addedEdges.has(spouseEdgeId)) {
+          addedEdges.add(spouseEdgeId);
+          newEdges.push({
+            id: spouseEdgeId,
+            source: spouseId,
+            target: childId,
+            type: 'smoothstep',
+            style: { stroke: '#92400e', strokeWidth: 1.5 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#92400e' },
+          });
+        }
+      }
     }
   });
 

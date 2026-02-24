@@ -42,7 +42,7 @@ export default function RelationsPage() {
   const [allPersons, setAllPersons] = useState<Person[]>([]);
   const [selectedRelation, setSelectedRelation] = useState<RelationType | null>(null);
   const [search, setSearch] = useState('');
-  const [marriageYear, setMarriageYear] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [existingRelations, setExistingRelations] = useState<string[]>([]);
 
@@ -85,15 +85,11 @@ export default function RelationsPage() {
     if (!confirmTarget || !selectedRelation || !currentPerson) return;
     setSaving(true);
 
-    const isMarriage = selectedRelation === 'husband' || selectedRelation === 'wife';
-    const myYear = isMarriage && marriageYear ? parseInt(marriageYear) : null;
-
     // 내 → 상대 관계 저장
     const { error: e1 } = await supabase.from('jokbo_relationships').insert({
       person_id: id,
       related_person_id: confirmTarget.id,
       relation_type: selectedRelation,
-      marriage_year: myYear,
     });
 
     if (e1) {
@@ -108,7 +104,6 @@ export default function RelationsPage() {
       person_id: confirmTarget.id,
       related_person_id: id,
       relation_type: reverse,
-      marriage_year: myYear,
     });
 
     if (e2) {
@@ -170,18 +165,7 @@ export default function RelationsPage() {
             ))}
           </div>
 
-          {(selectedRelation === 'husband' || selectedRelation === 'wife') && (
-            <div className="mt-4">
-              <label className="text-sm font-medium text-amber-800">결혼연도 (선택)</label>
-              <input
-                type="number"
-                placeholder="1980"
-                value={marriageYear}
-                onChange={e => setMarriageYear(e.target.value)}
-                className="w-full border border-amber-200 rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-            </div>
-          )}
+
         </div>
 
         {/* Step 2: 인물 선택 */}
@@ -244,9 +228,7 @@ export default function RelationsPage() {
               <p className="text-amber-900 font-medium text-lg">{currentPerson.name}</p>
               <p className="text-amber-500 text-sm my-1">의 {selectedLabel}</p>
               <p className="text-amber-900 font-medium text-lg">{confirmTarget.name}</p>
-              {marriageYear && (
-                <p className="text-amber-400 text-xs mt-2">{marriageYear}년 결혼</p>
-              )}
+
             </div>
 
             <p className="text-gray-400 text-xs text-center mb-4">

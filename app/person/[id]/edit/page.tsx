@@ -16,6 +16,13 @@ export default function EditPerson() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [originalPhotoUrl, setOriginalPhotoUrl] = useState<string | null>(null);
 
+  const FAMILY_OPTIONS = [
+    { id: 'woo_family',  label: '🌳 우정형' },
+    { id: 'kim_family',  label: '🌳 김억조' },
+    { id: 'min_family',  label: '🌳 민천금 부친' },
+    { id: 'kwon_family', label: '🌳 권두오 부친' },
+  ];
+
   const [form, setForm] = useState({
     name: '',
     gender: 'unknown',
@@ -27,6 +34,7 @@ export default function EditPerson() {
     occupation: '',
     notes: '',
   });
+  const [familyIds, setFamilyIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPerson();
@@ -55,6 +63,7 @@ export default function EditPerson() {
       occupation: data.occupation || '',
       notes: data.notes || '',
     });
+    setFamilyIds(data.family_tree_ids || []);
     setPhotoPreview(data.photo_url || null);
     setOriginalPhotoUrl(data.photo_url || null);
     setLoading(false);
@@ -138,6 +147,7 @@ export default function EditPerson() {
       address: form.address || null,
       occupation: form.occupation || null,
       notes: form.notes || null,
+      family_tree_ids: familyIds,
     }).eq('id', id);
 
     if (error) {
@@ -277,6 +287,30 @@ export default function EditPerson() {
               placeholder="교사, 의사, 농업..."
               className="w-full border border-amber-200 rounded-xl px-4 py-2.5 mt-1 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
+          </div>
+
+          {/* 패밀리 */}
+          <div>
+            <label className="text-sm font-medium text-amber-800 block mb-2">소속 패밀리</label>
+            <div className="flex flex-col gap-2">
+              {FAMILY_OPTIONS.map(f => (
+                <label key={f.id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={familyIds.includes(f.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFamilyIds([...familyIds, f.id]);
+                      } else {
+                        setFamilyIds(familyIds.filter(id => id !== f.id));
+                      }
+                    }}
+                    className="w-4 h-4 accent-amber-600"
+                  />
+                  <span className="text-sm text-amber-800">{f.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* 특기사항 */}
