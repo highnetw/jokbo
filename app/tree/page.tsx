@@ -45,13 +45,25 @@ function TreeInner() {
       const { data: persons } = await supabase
         .from('jokbo_persons')
         .select('id, name, gender, birth_year, death_year, photo_url, family_tree_ids');
-      const { data: rels } = await supabase
-        .from('jokbo_relationships')
-        .select('person_id, related_person_id, relation_type');
 
-      if (persons && rels) {
+      // 1000개 제한 우회: 페이지네이션으로 전체 로드
+      let allRelsData: RelRow[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data: relsPage } = await supabase
+          .from('jokbo_relationships')
+          .select('person_id, related_person_id, relation_type')
+          .range(from, from + pageSize - 1);
+        if (!relsPage || relsPage.length === 0) break;
+        allRelsData = [...allRelsData, ...relsPage];
+        if (relsPage.length < pageSize) break;
+        from += pageSize;
+      }
+
+      if (persons && allRelsData.length > 0) {
         setAllPersons(persons as PersonRow[]);
-        setAllRels(rels as RelRow[]);
+        setAllRels(allRelsData as RelRow[]);
       }
       setLoading(false);
     };

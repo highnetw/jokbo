@@ -121,10 +121,16 @@ export function buildTreeData(
   });
 
   // ── 대표 ID (자녀가 더 많은 쪽 우선) ─────────────────
-  const countChildren = (id: string) => filteredRels.filter(r =>
-    (r.person_id === id && (r.relation_type === 'son' || r.relation_type === 'daughter')) ||
-    (r.related_person_id === id && (r.relation_type === 'father' || r.relation_type === 'mother'))
-  ).length;
+  const countChildren = (id: string) => {
+    const childIds = new Set<string>();
+    filteredRels.forEach(r => {
+      if (r.person_id === id && (r.relation_type === 'son' || r.relation_type === 'daughter'))
+        childIds.add(r.related_person_id);
+      if (r.related_person_id === id && (r.relation_type === 'father' || r.relation_type === 'mother'))
+        childIds.add(r.person_id);
+    });
+    return childIds.size;
+  };
 
   const getRepId = (id: string) => {
     const spouse = coupleMap.get(id);
@@ -133,6 +139,15 @@ export function buildTreeData(
     const spouseCount = countChildren(spouse);
     if (idCount > spouseCount) return id;
     if (spouseCount > idCount) return spouse;
+    // 자녀 수 동수일 때: 부모 있는 쪽 우선
+    const hasParent = (pid: string) => filteredRels.some(r =>
+      (r.person_id === pid && (r.relation_type === 'son' || r.relation_type === 'daughter')) ||
+      (r.related_person_id === pid && (r.relation_type === 'father' || r.relation_type === 'mother'))
+    );
+    const idHasParent = hasParent(id);
+    const spouseHasParent = hasParent(spouse);
+    if (idHasParent && !spouseHasParent) return id;
+    if (spouseHasParent && !idHasParent) return spouse;
     return [id, spouse].sort()[0];
   };
 
@@ -140,26 +155,28 @@ export function buildTreeData(
   // 부부는 대표 1명(repId)으로만 처리 → inDegree=1 보장
   const childrenOf = new Map<string, Set<string>>();
   const parentsOf = new Map<string, Set<string>>();
+
+  // 먼저 모든 부모-자녀 쌍을 수집 (중복 제거)
+  const parentChildPairs = new Set<string>();
   filteredRels.forEach(r => {
     let parentId: string | null = null;
     let childId: string | null = null;
-
     if (r.relation_type === 'son' || r.relation_type === 'daughter') {
-      parentId = r.person_id;
-      childId = r.related_person_id;
+      parentId = r.person_id; childId = r.related_person_id;
     } else if (r.relation_type === 'father' || r.relation_type === 'mother') {
-      parentId = r.related_person_id;
-      childId = r.person_id;
+      parentId = r.related_person_id; childId = r.person_id;
     }
+    if (parentId && childId) parentChildPairs.add(`${parentId}|${childId}`);
+  });
 
-    if (parentId && childId) {
-      // 부부 중 대표 1명으로 통일
-      const repParentId = getRepId(parentId);
-      if (!childrenOf.has(repParentId)) childrenOf.set(repParentId, new Set());
-      childrenOf.get(repParentId)!.add(childId);
-      if (!parentsOf.has(childId)) parentsOf.set(childId, new Set());
-      parentsOf.get(childId)!.add(repParentId);
-    }
+  // repId 기준으로 통일해서 childrenOf/parentsOf 구성
+  parentChildPairs.forEach(pair => {
+    const [parentId, childId] = pair.split('|');
+    const repParentId = getRepId(parentId);
+    if (!childrenOf.has(repParentId)) childrenOf.set(repParentId, new Set());
+    childrenOf.get(repParentId)!.add(childId);
+    if (!parentsOf.has(childId)) parentsOf.set(childId, new Set());
+    parentsOf.get(childId)!.add(repParentId);
   });
 
   // ── 생년 조회 헬퍼 ────────────────────────────────────
@@ -313,6 +330,13 @@ export function buildTreeData(
       const w = getSubtreeWidth(rep);
       placeSubtree(rep, curX + w / 2, 0);
       curX += w + H_GAP * 6;
+    } else if (!placed.has(root.id)) {
+      // rep는 이미 배치됐지만 본인(외족 배우자)은 아직 미배치 → 배우자 옆에 붙이기
+      const repPos = posMap.get(rep);
+      if (repPos) {
+        placed.add(root.id);
+        posMap.set(root.id, { x: repPos.x + NODE_W + H_GAP, y: repPos.y });
+      }
     }
   });
 
