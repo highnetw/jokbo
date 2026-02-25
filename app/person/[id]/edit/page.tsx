@@ -12,6 +12,8 @@ export default function EditPerson() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [pwInput, setPwInput] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [originalPhotoUrl, setOriginalPhotoUrl] = useState<string | null>(null);
@@ -157,6 +159,42 @@ export default function EditPerson() {
     }
     setSaving(false);
   };
+
+  if (!authenticated) {
+    return (
+      <main className="min-h-screen bg-amber-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow text-center space-y-4">
+          <div className="text-4xl">🔒</div>
+          <h2 className="text-xl font-bold text-amber-900">수정 암호 입력</h2>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => setPwInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                if (pwInput === '1234') setAuthenticated(true);
+                else { alert('암호가 틀렸습니다!'); setPwInput(''); }
+              }
+            }}
+            placeholder="4자리 암호"
+            maxLength={4}
+            className="w-40 border border-amber-200 rounded-xl px-4 py-2.5 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-amber-400"
+          />
+          <div>
+            <button
+              onClick={() => {
+                if (pwInput === '1234') setAuthenticated(true);
+                else { alert('암호가 틀렸습니다!'); setPwInput(''); }
+              }}
+              className="bg-amber-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-amber-700 transition"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
