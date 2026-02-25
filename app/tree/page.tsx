@@ -21,10 +21,10 @@ import { buildTreeData, PersonRow, RelRow } from '@/lib/treeBuilder';
 
 const FAMILY_TABS = [
   { id: 'all', label: '전체' },
-  { id: 'woo_family', label: '🌳 우정형' },
-  { id: 'kim_family', label: '🌳 김억조' },
-  { id: 'min_family', label: '🌳 민천금 부친' },
-  { id: 'kwon_family', label: '🌳 권두오 부친' },
+  { id: 'woo_family', label: '🌳 우정형계열' },
+  { id: 'kim_family', label: '🌳 김억조계열' },
+  { id: 'min_family', label: '🌳 민천금계열' },
+  { id: 'kwon_family', label: '🌳 권두오계열' },
 ];
 
 function TreeInner() {
