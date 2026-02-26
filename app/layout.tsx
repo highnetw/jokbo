@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 
 // 이 부분을 수정했습니다!
 export const metadata: Metadata = {
-  title: "JokBo", // 폰 아이콘 아래에 표시될 이름
+  title: "가계도", // 폰 아이콘 아래에 표시될 이름
   description: "가족의 역사를 기록하는 족보 앱",
   icons: {
     icon: "/icon.png",        // 일반 아이콘
