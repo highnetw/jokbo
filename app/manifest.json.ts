@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'jokbo',
-    short_name: 'jokbo',
+    name: '가계도',
+    short_name: '가계도',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
