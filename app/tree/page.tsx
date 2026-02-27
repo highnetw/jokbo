@@ -143,7 +143,7 @@ function TreeInner() {
             className="border border-amber-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-36"
           />
           {searchResults.length > 0 && (
-            <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-72 overflow-y-auto" style={{marginTop: '4px'}}>
+            <div className="fixed bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-72 overflow-y-auto" style={{top: '100px', right: '24px'}}>
               {searchResults.map(p => (
                 <button
                   key={p.id}
