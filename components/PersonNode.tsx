@@ -34,27 +34,27 @@ export function PersonNode({ data }: { data: NodeData }) {
           border: `2px solid ${borderColor}`,
           borderRadius: 12,
           padding: '8px 12px',
-          minWidth: 110,
+          minWidth: 165,
           textAlign: 'center',
           cursor: 'pointer',
           boxShadow: shadow,
         }}>
           {data.isCenter && (
-            <div style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginBottom: 2 }}>⭐ 중심 인물</div>
+            <div style={{ fontSize: 12, color: '#d97706', fontWeight: 'bold', marginBottom: 4 }}>⭐ 중심 인물</div>
           )}
           {data.photo_url ? (
             <img
               src={data.photo_url}
               alt={data.name}
-              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 4px' }}
+              style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 6px' }}
             />
           ) : (
-            <div style={{ fontSize: 24, marginBottom: 2 }}>
+            <div style={{ fontSize: 36, marginBottom: 4 }}>
               {isMale ? '👨' : isFemale ? '👩' : '👤'}
             </div>
           )}
-          <div style={{ fontWeight: 'bold', fontSize: 13, color: '#1f2937' }}>{data.name}</div>
-          <div style={{ fontSize: 11, color: '#6b7280' }}>
+          <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1f2937' }}>{data.name}</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>
             {data.birth_year && data.death_year
               ? `${data.birth_year}~${data.death_year}`
               : data.birth_year

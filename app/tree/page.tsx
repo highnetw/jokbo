@@ -90,14 +90,18 @@ function TreeInner() {
     setEdges(e);
   }, [allPersons, allRels, selectedFamily, setNodes, setEdges]);
 
-  useEffect(() => { buildTree(); }, [buildTree]);
+  useEffect(() => {
+    buildTree();
+    setTimeout(() => fitView({ padding: 0.2, duration: 600 }), 100);
+  }, [buildTree]);
 
   const selectedTab = FAMILY_TABS.find(t => t.id === selectedFamily);
 
   const handleSearch = (value: string) => {
     setSearch(value);
     if (!value.trim()) { setSearchResults([]); return; }
-    const results = allPersons.filter(p => p.name.includes(value)).sort((a, b) => a.name.localeCompare(b.name, 'ko')).slice(0, 20);
+    const limit = value.length === 1 ? 40 : 20;
+    const results = allPersons.filter(p => p.name.includes(value)).sort((a, b) => a.name.localeCompare(b.name, 'ko')).slice(0, limit);
     setSearchResults(results);
   };
 
@@ -139,7 +143,7 @@ function TreeInner() {
             className="border border-amber-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-36"
           />
           {searchResults.length > 0 && (
-            <div className="absolute right-0 top-10 bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-64 overflow-y-auto">
+            <div className="absolute right-0 top-12 bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-72 overflow-y-auto" style={{marginTop: '4px'}}>
               {searchResults.map(p => (
                 <button
                   key={p.id}
