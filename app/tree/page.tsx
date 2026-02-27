@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import {
@@ -35,6 +35,8 @@ function TreeInner() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<{id: string, name: string}[]>([]);
   const { fitView } = useReactFlow();
+  const [dropdownTop, setDropdownTop] = useState(100);
+  const searchRef = React.useRef<HTMLDivElement>(null);
 
   const [allPersons, setAllPersons] = useState<PersonRow[]>([]);
   const [allRels, setAllRels] = useState<RelRow[]>([]);
@@ -100,6 +102,11 @@ function TreeInner() {
   const handleSearch = (value: string) => {
     setSearch(value);
     if (!value.trim()) { setSearchResults([]); return; }
+    // 검색창 실제 bottom 위치 측정
+    if (searchRef.current) {
+      const rect = searchRef.current.getBoundingClientRect();
+      setDropdownTop(rect.bottom + 6);
+    }
     const limit = value.length === 1 ? 40 : 20;
     const results = allPersons.filter(p => p.name.includes(value)).sort((a, b) => a.name.localeCompare(b.name, 'ko')).slice(0, limit);
     setSearchResults(results);
@@ -133,35 +140,7 @@ function TreeInner() {
         <h1 className="text-xl font-bold text-amber-900">
           🌳 {selectedFamily === 'all' ? ' 계보도 (전체)' : `${selectedTab?.label} 계보도`}
         </h1>
-        {/* 검색창 */}
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={e => handleSearch(e.target.value)}
-            placeholder="이름 검색..."
-            className="border border-amber-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-36"
-          />
-          {searchResults.length > 0 && (
-            <div className="fixed bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-72 overflow-y-auto" style={{top: '100px', right: '24px'}}>
-              {searchResults.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelectPerson(p.id)}
-                  className="w-full text-left px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 first:rounded-t-xl last:rounded-b-xl"
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* {<div className="flex items-center gap-4 text-xs text-gray-500">
-          <span><span style={{ color: '#3b82f6' }}>■</span> 남성</span>
-          <span><span style={{ color: '#ec4899' }}>■</span> 여성</span>
-          <span><span style={{ color: '#f59e0b' }}>- -</span> 부부</span>
-          <span><span style={{ color: '#92400e' }}>→</span> 부모-자녀</span>
-        </div>} */}
+        <div className="w-36" />
       </div>
 
       {/* 패밀리 탭 */}
@@ -178,6 +157,30 @@ function TreeInner() {
             {tab.label}
           </button>
         ))}
+      </div>
+
+      {/* 검색창 - 탭바 아래 우측 정렬 */}
+      <div className="flex justify-end px-6 py-2 bg-white border-b border-amber-100 z-10 relative" ref={searchRef}>
+        <input
+          type="text"
+          value={search}
+          onChange={e => handleSearch(e.target.value)}
+          placeholder="이름 검색..."
+          className="border border-amber-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 w-48"
+        />
+        {searchResults.length > 0 && (
+          <div className="absolute right-6 top-full mt-1 bg-white rounded-xl shadow-lg border border-amber-100 z-50 w-48 max-h-72 overflow-y-auto">
+            {searchResults.map(p => (
+              <button
+                key={p.id}
+                onClick={() => handleSelectPerson(p.id)}
+                className="w-full text-left px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 first:rounded-t-xl last:rounded-b-xl"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (
