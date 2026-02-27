@@ -37,13 +37,12 @@ export function buildTreeData(
     const childrenOfFull = new Map<string, Set<string>>();
     const parentsOfFull = new Map<string, Set<string>>();
 
-    // 전체 관계 맵 구성 (son/daughter + father/mother 모두 처리)
+    // 전체 관계 맵 먼저 구성 (centerPersonId 교체에 필요)
     rels.forEach(r => {
       if (r.relation_type === 'husband' || r.relation_type === 'wife') {
         coupleMapFull.set(r.person_id, r.related_person_id);
         coupleMapFull.set(r.related_person_id, r.person_id);
       }
-
       let parentId: string | null = null;
       let childId: string | null = null;
       if (r.relation_type === 'son' || r.relation_type === 'daughter') {
@@ -59,48 +58,93 @@ export function buildTreeData(
       }
     });
 
+    // 외족 배우자이면 혈족 배우자로 교체
+    const spouseOfCenter = coupleMapFull.get(centerPersonId);
+    if (spouseOfCenter) {
+      const centerHasParent = parentsOfFull.has(centerPersonId);
+      const centerHasChild = childrenOfFull.has(centerPersonId);
+      const spouseHasParent = parentsOfFull.has(spouseOfCenter);
+      const spouseHasChild = childrenOfFull.has(spouseOfCenter);
+      // 중심 인물이 부모/자녀 없고 배우자는 있으면 → 외족, 배우자로 교체
+      if (!centerHasParent && !centerHasChild && (spouseHasParent || spouseHasChild)) {
+        centerPersonId = spouseOfCenter;
+      }
+    }
+
     // 위로: 부모 → 조부모 → 증조부모 (최대 3세대)
+    // 본인 + 배우자 양쪽 부모 모두 탐색
     const addAncestors = (id: string, depth: number) => {
       includeIds.add(id);
       const spouse = coupleMapFull.get(id);
       if (spouse) includeIds.add(spouse);
       if (depth <= 0) return;
+      // 본인 부모
       (parentsOfFull.get(id) || new Set()).forEach(parentId => {
         addAncestors(parentId, depth - 1);
       });
+      // 배우자 부모 (배우자가 혈족인 경우 커버)
+      if (spouse) {
+        (parentsOfFull.get(spouse) || new Set()).forEach(parentId => {
+          addAncestors(parentId, depth - 1);
+        });
+      }
     };
 
     // 아래로: 자녀 → 손자 → 증손자 (최대 3세대)
+    // 본인 + 배우자 양쪽 자녀 모두 탐색
     const addDescendants = (id: string, depth: number) => {
       includeIds.add(id);
       const spouse = coupleMapFull.get(id);
       if (spouse) includeIds.add(spouse);
       if (depth <= 0) return;
+      // 본인 자녀
       (childrenOfFull.get(id) || new Set()).forEach(childId => {
         addDescendants(childId, depth - 1);
       });
+      // 배우자 자녀 (배우자 쪽으로만 입력된 경우 커버)
+      if (spouse) {
+        (childrenOfFull.get(spouse) || new Set()).forEach(childId => {
+          addDescendants(childId, depth - 1);
+        });
+      }
     };
 
     addAncestors(centerPersonId, 3);
     addDescendants(centerPersonId, 3);
 
-    // ── 형제자매 추가 ──────────────────────────────────
-    // 중심인물의 부모를 찾고 → 부모의 모든 자녀 = 형제자매
-    const myParents = parentsOfFull.get(centerPersonId) || new Set<string>();
+    // ── 형제자매 추가 (본인 + 배우자 양쪽) ────────────────
+    const centerSpouse = coupleMapFull.get(centerPersonId);
+    const siblingSources = [centerPersonId, centerSpouse].filter(Boolean) as string[];
+    siblingSources.forEach(sourceId => {
+    const myParents = parentsOfFull.get(sourceId) || new Set<string>();
     myParents.forEach(parentId => {
       (childrenOfFull.get(parentId) || new Set<string>()).forEach(siblingId => {
         includeIds.add(siblingId);
         // 형제자매의 배우자도 포함
         const siblingSpouse = coupleMapFull.get(siblingId);
         if (siblingSpouse) includeIds.add(siblingSpouse);
-        // 형제자매의 자녀(조카)도 포함
-        (childrenOfFull.get(siblingId) || new Set<string>()).forEach(nephewId => {
-          includeIds.add(nephewId);
-          const nephewSpouse = coupleMapFull.get(nephewId);
-          if (nephewSpouse) includeIds.add(nephewSpouse);
+        // 형제자매의 자녀(조카)도 포함 - 본인+배우자 양쪽 커버
+        const siblingSpouseId = siblingSpouse;
+        [siblingId, siblingSpouseId].forEach(sid => {
+          if (!sid) return;
+          (childrenOfFull.get(sid) || new Set<string>()).forEach(nephewId => {
+            includeIds.add(nephewId);
+            const nephewSpouse = coupleMapFull.get(nephewId);
+            if (nephewSpouse) includeIds.add(nephewSpouse);
+            // 조카의 자녀(종손)도 포함
+            [nephewId, nephewSpouse].forEach(nid => {
+              if (!nid) return;
+              (childrenOfFull.get(nid) || new Set<string>()).forEach(grandNephewId => {
+                includeIds.add(grandNephewId);
+                const gnSpouse = coupleMapFull.get(grandNephewId);
+                if (gnSpouse) includeIds.add(gnSpouse);
+              });
+            });
+          });
         });
       });
     });
+    }); // siblingSources.forEach
 
     filteredPersons = persons.filter(p => includeIds.has(p.id));
     filteredRels = rels.filter(r =>
