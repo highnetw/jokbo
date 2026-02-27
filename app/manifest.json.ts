@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '*가계도*',
+    name: '가계도',
     short_name: '가계도',
     start_url: '/',
     display: 'standalone',
