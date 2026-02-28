@@ -21,10 +21,10 @@ import { buildTreeData, PersonRow, RelRow } from '@/lib/treeBuilder';
 
 const FAMILY_TABS = [
   { id: 'all', label: '전체' },
-  { id: 'woo_family', label: '🌳 우정형계열' },
-  { id: 'kim_family', label: '🌳 김억조계열' },
-  { id: 'min_family', label: '🌳 민천금계열' },
-  { id: 'kwon_family', label: '🌳 권두오계열' },
+  { id: 'woo_family', label: '🌳우정형' },
+  { id: 'kim_family', label: '🌳김억조' },
+  { id: 'min_family', label: '🌳민천금' },
+  { id: 'kwon_family', label: '🌳권두오' },
 ];
 
 function TreeInner() {
@@ -33,7 +33,7 @@ function TreeInner() {
   const [loading, setLoading] = useState(true);
   const [selectedFamily, setSelectedFamily] = useState('all');
   const [search, setSearch] = useState('');
-  const [searchResults, setSearchResults] = useState<{id: string, name: string}[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string, name: string }[]>([]);
   const { fitView } = useReactFlow();
   const [dropdownTop, setDropdownTop] = useState(100);
   const searchRef = React.useRef<HTMLDivElement>(null);
@@ -133,14 +133,23 @@ function TreeInner() {
     <main className="w-screen h-screen bg-amber-50 flex flex-col">
 
       {/* 헤더 */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white shadow-sm z-10">
-        <Link href="/">
-          <button className="text-amber-700 hover:text-amber-900 font-medium">← 인물로</button>
-        </Link>
+      <div className="flex items-center px-6 py-3 bg-white shadow-sm z-10">
+        {/* 왼쪽 */}
+        <div className="flex-1">
+          <Link href="/">
+            <button className="text-amber-700 hover:text-amber-900 font-medium whitespace-nowrap">
+              ← 인물로
+            </button>
+          </Link>
+        </div>
+
+        {/* 가운데 제목 */}
         <h1 className="text-xl font-bold text-amber-900 whitespace-nowrap">
-          🌳 {selectedFamily === 'all' ? ' 계보도 (전체)' : `${selectedTab?.label} 계보도`}
+          {selectedFamily === 'all' ? '계보도 (전체)' : `${selectedTab?.label} 계보도`}
         </h1>
-        <div className="w-36" />
+
+        {/* 오른쪽 균형용 */}
+        <div className="flex-1" />
       </div>
 
       {/* 패밀리 탭 */}
