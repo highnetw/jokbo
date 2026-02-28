@@ -137,7 +137,7 @@ function TreeInner() {
         <Link href="/">
           <button className="text-amber-700 hover:text-amber-900 font-medium">← 인물로</button>
         </Link>
-        <h1 className="text-xl font-bold text-amber-900">
+        <h1 className="text-xl font-bold text-amber-900 whitespace-nowrap">
           🌳 {selectedFamily === 'all' ? ' 계보도 (전체)' : `${selectedTab?.label} 계보도`}
         </h1>
         <div className="w-36" />
