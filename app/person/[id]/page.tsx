@@ -177,11 +177,13 @@ export default function PersonDetail() {
       <div className="max-w-lg mx-auto">
 
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/">
-            <button className="text-amber-700 hover:text-amber-900 font-medium">← 목록으로</button>
-          </Link>
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-2 mb-6">
+          <div>
+            <Link href="/">
+              <button className="text-amber-700 hover:text-amber-900 font-medium">← 목록으로</button>
+            </Link>
+          </div>
+          <div className="flex gap-2 justify-end">
             <Link href={`/tree/${id}`}>
               <button className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-200 transition">
                 🌳 중심 계보도
