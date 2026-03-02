@@ -48,6 +48,9 @@ function TreeInner() {
         .from('jokbo_persons')
         .select('id, name, gender, birth_year, death_year, photo_url, family_tree_ids');
 
+      // fetchData 함수 안에서 persons 받은 직후에 추가
+      console.log('persons sample:', persons?.slice(0, 3));
+
       // 1000개 제한 우회: 페이지네이션으로 전체 로드
       let allRelsData: RelRow[] = [];
       let from = 0;
@@ -154,18 +157,24 @@ function TreeInner() {
 
       {/* 패밀리 탭 */}
       <div className="flex gap-2 px-6 py-2 bg-white border-b border-amber-100 z-10 overflow-x-auto">
-        {FAMILY_TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedFamily(tab.id)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition
-              ${selectedFamily === tab.id
-                ? 'bg-amber-600 text-white'
-                : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {FAMILY_TABS.map(tab => {
+          const count = tab.id === 'all'
+            ? allPersons.length
+            : allPersons.filter(p => p.family_tree_ids?.includes(tab.id)).length;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedFamily(tab.id)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition
+          ${selectedFamily === tab.id
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}
+            >
+              {tab.label} {count > 0 ? `(${count})` : ''}
+            </button>
+          );
+        })}
       </div>
 
       {/* 검색창 - 탭바 아래 우측 정렬 */}
