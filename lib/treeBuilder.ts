@@ -7,6 +7,7 @@ export type PersonRow = {
   birth_year: number | null;
   death_year: number | null;
   photo_url: string | null;
+  family_tree_ids: string[] | null;
 };
 
 export type RelRow = {
