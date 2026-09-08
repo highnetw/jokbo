@@ -30,7 +30,7 @@ export default function CenterTreePage() {
   const build = useCallback(async () => {
     const { data: persons } = await supabase
       .from('jokbo_persons')
-      .select('id, name, gender, birth_year, death_year, photo_url');
+      .select('id, name, gender, birth_year, death_year, photo_url, family_tree_ids');
     const { data: rels } = await supabase
       .from('jokbo_relationships')
       .select('person_id, related_person_id, relation_type');
