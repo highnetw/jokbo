@@ -15,10 +15,10 @@ export type RelRow = {
   relation_type: string;
 };
 
-const NODE_W = 195;
-const NODE_H = 165;
-const H_GAP = 60;
-const V_GAP = 180;
+const NODE_W = 120;
+const NODE_H = 70;
+const H_GAP = 30;
+const V_GAP = 90;
 
 export function buildTreeData(
   persons: PersonRow[],

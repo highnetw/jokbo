@@ -19,10 +19,17 @@ export function PersonNode({ data }: { data: NodeData }) {
     ? '#d97706'
     : isMale ? '#3b82f6' : isFemale ? '#ec4899' : '#9ca3af';
   const shadow = data.isHighlighted
-    ? '0 0 0 4px #22c55e, 0 4px 16px rgba(34,197,94,0.6)'
+    ? '0 0 0 3px #22c55e, 0 2px 8px rgba(34,197,94,0.5)'
     : data.isCenter
-    ? '0 0 0 3px #fbbf24, 0 4px 12px rgba(217,119,6,0.4)'
-    : '0 2px 6px rgba(0,0,0,0.1)';
+    ? '0 0 0 2px #fbbf24, 0 2px 8px rgba(217,119,6,0.4)'
+    : '0 1px 4px rgba(0,0,0,0.1)';
+  const emoji = isMale ? '👨' : isFemale ? '👩' : '👤';
+
+  const yearLabel = data.birth_year && data.death_year
+    ? `${data.birth_year}~${data.death_year}`
+    : data.birth_year
+    ? `${data.birth_year}`
+    : '';
 
   return (
     <div style={{ position: 'relative' }}>
@@ -32,35 +39,22 @@ export function PersonNode({ data }: { data: NodeData }) {
         <div style={{
           background: bgColor,
           border: `2px solid ${borderColor}`,
-          borderRadius: 12,
-          padding: '8px 12px',
-          minWidth: 165,
+          borderRadius: 8,
+          padding: '5px 10px',
+          minWidth: 100,
+          maxWidth: 130,
           textAlign: 'center',
           cursor: 'pointer',
           boxShadow: shadow,
         }}>
           {data.isCenter && (
-            <div style={{ fontSize: 12, color: '#d97706', fontWeight: 'bold', marginBottom: 4 }}>⭐ 중심 인물</div>
+            <div style={{ fontSize: 9, color: '#d97706', fontWeight: 'bold', marginBottom: 2 }}>⭐ 중심</div>
           )}
-          {data.photo_url ? (
-            <img
-              src={data.photo_url}
-              alt={data.name}
-              style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 6px' }}
-            />
-          ) : (
-            <div style={{ fontSize: 36, marginBottom: 4 }}>
-              {isMale ? '👨' : isFemale ? '👩' : '👤'}
-            </div>
+          <div style={{ fontSize: 18, lineHeight: 1.2 }}>{emoji}</div>
+          <div style={{ fontWeight: 'bold', fontSize: 13, color: '#1f2937', marginTop: 2 }}>{data.name}</div>
+          {yearLabel && (
+            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{yearLabel}</div>
           )}
-          <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1f2937' }}>{data.name}</div>
-          <div style={{ fontSize: 13, color: '#6b7280' }}>
-            {data.birth_year && data.death_year
-              ? `${data.birth_year}~${data.death_year}`
-              : data.birth_year
-              ? `${data.birth_year}년생`
-              : ''}
-          </div>
         </div>
       </a>
 
@@ -71,5 +65,5 @@ export function PersonNode({ data }: { data: NodeData }) {
   );
 }
 
-// ⚠️ 반드시 모듈 최상위에 정의 (컴포넌트 함수 밖)
+// module-level definition (outside component)
 export const nodeTypes = { person: PersonNode };
