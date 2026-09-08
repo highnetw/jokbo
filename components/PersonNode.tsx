@@ -23,7 +23,8 @@ export function PersonNode({ data }: { data: NodeData }) {
     : data.isCenter
     ? '0 0 0 2px #fbbf24, 0 2px 8px rgba(217,119,6,0.4)'
     : '0 1px 4px rgba(0,0,0,0.1)';
-  const emoji = isMale ? '👨' : isFemale ? '👩' : '👤';
+  const genderLabel = isMale ? '남' : isFemale ? '여' : '';
+  const genderColor = isMale ? '#3b82f6' : isFemale ? '#ec4899' : '#9ca3af';
 
   const yearLabel = data.birth_year && data.death_year
     ? `${data.birth_year}~${data.death_year}`
@@ -50,10 +51,14 @@ export function PersonNode({ data }: { data: NodeData }) {
           {data.isCenter && (
             <div style={{ fontSize: 9, color: '#d97706', fontWeight: 'bold', marginBottom: 2 }}>⭐ 중심</div>
           )}
-          <div style={{ fontSize: 18, lineHeight: 1.2 }}>{emoji}</div>
-          <div style={{ fontWeight: 'bold', fontSize: 13, color: '#1f2937', marginTop: 2 }}>{data.name}</div>
+          <div style={{ fontWeight: 'bold', fontSize: 14, color: '#1f2937' }}>
+            {data.name}
+            {genderLabel && (
+              <span style={{ fontSize: 11, color: genderColor, marginLeft: 4 }}>({genderLabel})</span>
+            )}
+          </div>
           {yearLabel && (
-            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>{yearLabel}</div>
+            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{yearLabel}</div>
           )}
         </div>
       </a>
