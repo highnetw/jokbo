@@ -27,13 +27,11 @@ export function buildTreeData(
   centerPersonId?: string
 ): { nodes: Node[]; edges: Edge[] } {
 
-  // -- 중심 인물 기준 필터링 --
   let filteredPersons = persons;
   let filteredRels = rels;
 
   if (centerPersonId) {
     const includeIds = new Set<string>();
-
     const coupleMapFull = new Map<string, string>();
     const childrenOfFull = new Map<string, Set<string>>();
     const parentsOfFull = new Map<string, Set<string>>();
@@ -138,7 +136,6 @@ export function buildTreeData(
     );
   }
 
-  // -- 부부 관계 맵 --
   const coupleMap = new Map<string, string>();
   const couples = new Set<string>();
   filteredRels.forEach(r => {
@@ -150,7 +147,6 @@ export function buildTreeData(
     }
   });
 
-  // -- 대표 ID (자녀가 더 많은 쪽 우선) --
   const countChildren = (id: string) => {
     const childIds = new Set<string>();
     filteredRels.forEach(r => {
@@ -169,7 +165,6 @@ export function buildTreeData(
     const spouseCount = countChildren(spouse);
     if (idCount > spouseCount) return id;
     if (spouseCount > idCount) return spouse;
-    // 자녀 수 동수일 때: 부모 있는 쪽 우선
     const hasParent = (pid: string) => filteredRels.some(r =>
       (r.person_id === pid && (r.relation_type === 'son' || r.relation_type === 'daughter')) ||
       (r.related_person_id === pid && (r.relation_type === 'father' || r.relation_type === 'mother'))
@@ -181,11 +176,9 @@ export function buildTreeData(
     return [id, spouse].sort()[0];
   };
 
-  // -- 부모-자녀 관계 맵 --
   const childrenOf = new Map<string, Set<string>>();
   const parentsOf = new Map<string, Set<string>>();
 
-  // 모든 부모-자녀 쌍 수집 (중복 제거)
   const parentChildPairs = new Set<string>();
   filteredRels.forEach(r => {
     let parentId: string | null = null;
@@ -198,7 +191,6 @@ export function buildTreeData(
     if (parentId && childId) parentChildPairs.add(`${parentId}|${childId}`);
   });
 
-  // 자녀별로 부모 목록 수집
   const childParentsMap = new Map<string, string[]>();
   parentChildPairs.forEach(pair => {
     const [parentId, childId] = pair.split('|');
@@ -206,30 +198,38 @@ export function buildTreeData(
     childParentsMap.get(childId)!.push(parentId);
   });
 
-  // 자녀에게 부모가 둘 이상이면 핏줄(부모 있는 쪽) 우선 선택
   const hasParentInTree = (pid: string) => filteredRels.some(r =>
     (r.person_id === pid && (r.relation_type === 'son' || r.relation_type === 'daughter')) ||
     (r.related_person_id === pid && (r.relation_type === 'father' || r.relation_type === 'mother'))
   );
 
-  // repId 기준으로 통일해서 childrenOf/parentsOf 구성
+  const debugTargets = ['박부자','박정희','박영희','박노수','박청뢰'];
+
   childParentsMap.forEach((parents, childId) => {
     let selectedParent: string;
     if (parents.length === 1) {
       selectedParent = parents[0];
     } else {
-      // 부모가 둘 이상이면 핏줄(부모 있는 쪽) 우선
       const bloodParent = parents.find(p => hasParentInTree(p));
       selectedParent = bloodParent ?? parents[0];
     }
     const repParentId = getRepId(selectedParent);
+
+    // DEBUG
+    const childName = persons.find(p => p.id === childId)?.name;
+    if (debugTargets.includes(childName ?? '')) {
+      const parentName = persons.find(p => p.id === selectedParent)?.name;
+      const repName = persons.find(p => p.id === repParentId)?.name;
+      const allParentNames = parents.map(p => persons.find(x => x.id === p)?.name);
+      console.log(`[CHILD] ${childName} | parents=${JSON.stringify(allParentNames)} | selected=${parentName} | rep=${repName}`);
+    }
+
     if (!childrenOf.has(repParentId)) childrenOf.set(repParentId, new Set());
     childrenOf.get(repParentId)!.add(childId);
     if (!parentsOf.has(childId)) parentsOf.set(childId, new Set());
     parentsOf.get(childId)!.add(repParentId);
   });
 
-  // -- 생년 조회 헬퍼 --
   const personMap = new Map<string, PersonRow>();
   filteredPersons.forEach(p => personMap.set(p.id, p));
 
@@ -237,7 +237,6 @@ export function buildTreeData(
     return personMap.get(id)?.birth_year ?? 9999;
   };
 
-  // -- 가족 단위 자녀 맵 (repId 기준으로 통합) --
   const familyChildren = new Map<string, Set<string>>();
   childrenOf.forEach((children, repId) => {
     if (!familyChildren.has(repId)) familyChildren.set(repId, new Set<string>());
@@ -246,13 +245,11 @@ export function buildTreeData(
     });
   });
 
-  // -- 자녀 배열을 생년 오름차순으로 정렬 --
   const getSortedChildren = (repId: string): string[] => {
     return Array.from(familyChildren.get(repId) || new Set<string>())
       .sort((a, b) => getBirthYear(a) - getBirthYear(b));
   };
 
-  // -- depth 계산 (위상정렬) --
   const depthMap = new Map<string, number>();
   const roots = filteredPersons.filter(p => !parentsOf.has(p.id));
 
@@ -276,7 +273,6 @@ export function buildTreeData(
     });
   }
 
-  // -- displayDepth (배우자 y좌표 보정) --
   const displayDepth = new Map<string, number>(depthMap);
   filteredPersons.forEach(p => { if (!displayDepth.has(p.id)) displayDepth.set(p.id, 0); });
 
@@ -302,7 +298,6 @@ export function buildTreeData(
     });
   }
 
-  // -- displayDepth 기준으로 자녀 depth 재계산 --
   let recalcChanged = true;
   while (recalcChanged) {
     recalcChanged = false;
@@ -321,7 +316,6 @@ export function buildTreeData(
     });
   }
 
-  // -- 레이아웃 배치 --
   const posMap = new Map<string, { x: number; y: number }>();
   const placed = new Set<string>();
 
@@ -366,7 +360,6 @@ export function buildTreeData(
     });
   };
 
-  // roots 생년 오름차순 정렬
   const sortedRoots = [...roots].sort((a, b) => (a.birth_year ?? 9999) - (b.birth_year ?? 9999));
 
   let curX = NODE_W;
@@ -377,7 +370,6 @@ export function buildTreeData(
       placeSubtree(rep, curX + w / 2, 0);
       curX += w + H_GAP * 6;
     } else if (!placed.has(root.id)) {
-      // rep는 이미 배치됐지만 본인(외족 배우자)은 아직 미배치 → 배우자 옆에 붙이기
       const repPos = posMap.get(rep);
       if (repPos) {
         placed.add(root.id);
@@ -394,7 +386,6 @@ export function buildTreeData(
     }
   });
 
-  // -- 노드 생성 --
   const newNodes: Node[] = filteredPersons.map(p => ({
     id: p.id,
     type: 'person',
@@ -410,11 +401,9 @@ export function buildTreeData(
     },
   }));
 
-  // -- 엣지 생성 --
   const newEdges: Edge[] = [];
   const addedEdges = new Set<string>();
 
-  // 부부 엣지
   couples.forEach(key => {
     const [a, b] = key.split('|');
     newEdges.push({
@@ -428,7 +417,6 @@ export function buildTreeData(
     });
   });
 
-  // 부모-자녀 엣지 (repId 기준으로 통일 → 이중선 방지)
   filteredRels.forEach(r => {
     let parentId: string | null = null;
     let childId: string | null = null;
@@ -455,7 +443,6 @@ export function buildTreeData(
           markerEnd: { type: MarkerType.ArrowClosed, color: '#92400e' },
         });
       }
-      // 배우자도 자동 연결
       const spouseId = coupleMap.get(repParentId);
       if (spouseId) {
         const spouseEdgeId = `child-${spouseId}-${childId}`;
