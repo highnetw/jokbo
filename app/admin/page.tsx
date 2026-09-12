@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, fetchAllRows } from '@/lib/supabase';
+import { effectiveBirthYear } from '@/lib/treeBuilder';
 import Link from 'next/link';
 
 type BackupData = {
@@ -41,26 +42,23 @@ export default function AdminPage() {
     setLoading(true);
     msg('백업 데이터 불러오는 중...');
 
-    const { data: persons, error: e1 } = await supabase
-      .from('jokbo_persons')
-      .select('*')
-      .order('birth_year', { ascending: true });
-
-    const { data: relationships, error: e2 } = await supabase
-      .from('jokbo_relationships')
-      .select('*');
-
-    if (e1 || e2) {
-      msg('백업 실패: ' + (e1?.message || e2?.message), true);
+    let persons: (object & { birth_year?: number | null })[];
+    let relationships: object[];
+    try {
+      persons = await fetchAllRows('jokbo_persons', '*');
+      relationships = await fetchAllRows('jokbo_relationships', '*');
+    } catch (err) {
+      msg('백업 실패: ' + (err instanceof Error ? err.message : String(err)), true);
       setLoading(false);
       return;
     }
+    persons.sort((a, b) => effectiveBirthYear(a.birth_year) - effectiveBirthYear(b.birth_year));
 
     const backup: BackupData = {
       exported_at: new Date().toISOString(),
       version: 1,
-      persons: persons || [],
-      relationships: relationships || [],
+      persons,
+      relationships,
     };
 
     const json = JSON.stringify(backup, null, 2);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { isKnownYear } from '@/lib/treeBuilder';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -170,7 +171,7 @@ export default function PersonDetail() {
 
   if (!person) return null;
 
-  const isDeceased = !!person.death_year;
+  const isDeceased = person.death_year != null;
 
   return (
     <main className="min-h-screen bg-amber-50 p-6">
@@ -226,10 +227,12 @@ export default function PersonDetail() {
               {person.gender !== 'unknown' && (
                 <span className="text-sm">{person.gender === 'male' ? '남성' : '여성'}</span>
               )}
-              {person.birth_year && (
+              {isKnownYear(person.birth_year) && (
                 <span className="text-sm">
                   {isDeceased
-                    ? `${person.birth_year} ~ ${person.death_year}년 (향년 ${person.death_year! - person.birth_year}세)`
+                    ? isKnownYear(person.death_year)
+                      ? `${person.birth_year} ~ ${person.death_year}년 (향년 ${person.death_year - person.birth_year}세)`
+                      : `${person.birth_year} ~ ? (졸년 미상)`
                     : `${person.birth_year}년생`}
                 </span>
               )}

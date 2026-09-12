@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, fetchAllRows } from '@/lib/supabase';
+import { effectiveBirthYear } from '@/lib/treeBuilder';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -65,12 +66,13 @@ export default function RelationsPage() {
   };
 
   const fetchAllPersons = async () => {
-    const { data } = await supabase
-      .from('jokbo_persons')
-      .select('id, name, gender, birth_year, photo_url')
-      .neq('id', id)
-      .order('birth_year', { ascending: true });
-    setAllPersons(data || []);
+    const data = await fetchAllRows<Person>(
+      'jokbo_persons',
+      'id, name, gender, birth_year, photo_url'
+    );
+    const others = data.filter(p => p.id !== id);
+    others.sort((a, b) => effectiveBirthYear(a.birth_year) - effectiveBirthYear(b.birth_year));
+    setAllPersons(others);
   };
 
   const fetchExistingRelations = async () => {

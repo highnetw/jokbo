@@ -1,4 +1,5 @@
 import { Handle, Position } from '@xyflow/react';
+import { isKnownYear } from '@/lib/treeBuilder';
 
 type NodeData = {
   id: string;
@@ -26,11 +27,12 @@ export function PersonNode({ data }: { data: NodeData }) {
   const genderLabel = isMale ? '남' : isFemale ? '여' : '';
   const genderColor = isMale ? '#3b82f6' : isFemale ? '#ec4899' : '#9ca3af';
 
-  const yearLabel = data.birth_year && data.death_year
-    ? `${data.birth_year}~${data.death_year}`
-    : data.birth_year
-    ? `${data.birth_year}`
-    : '';
+  const birthLabel = isKnownYear(data.birth_year) ? `${data.birth_year}` : '';
+  // death_year가 null이 아니면 사망 표시이지만, 0 이하는 "졸년 미상" 뜻이므로 물음표로 대체
+  const deathLabel = data.death_year != null ? (isKnownYear(data.death_year) ? `${data.death_year}` : '?') : '';
+  const yearLabel = birthLabel && deathLabel
+    ? `${birthLabel}~${deathLabel}`
+    : birthLabel || (deathLabel ? `~${deathLabel}` : '');
 
   return (
     <div style={{ position: 'relative' }}>

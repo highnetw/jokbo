@@ -16,6 +16,20 @@ export type RelRow = {
   relation_type: string;
 };
 
+// 출생연도가 없거나(null) 0/음수처럼 명백히 잘못된 값이면 "모름"으로 취급한다.
+// (0을 그대로 쓰면 실존하는 모든 사람보다 앞서 정렬되어 "가장 나이 많은 사람"으로
+// 배치되는 버그가 생긴다 - 오름차순 정렬에서 9999는 "모름"을 맨 뒤로 보내는 값이다)
+const UNKNOWN_BIRTH_YEAR = 9999;
+export const effectiveBirthYear = (birthYear: number | null | undefined): number => {
+  if (birthYear == null || birthYear <= 0) return UNKNOWN_BIRTH_YEAR;
+  return birthYear;
+};
+
+// 0 이하 값은 실제 연도가 아니라 "졸년 미상" 같은 임시 표기(-1, -2 등)로 쓰인 경우가 있다.
+// 화면에 실제 연도로 표시하거나 나이/향년 계산에 쓰면 안 되므로 구분해서 판별한다.
+export const isKnownYear = (year: number | null | undefined): year is number =>
+  year != null && year > 0;
+
 const NODE_W = 120;
 const NODE_H = 70;
 const H_GAP = 30;
@@ -198,12 +212,24 @@ export function buildTreeData(
     childParentsMap.get(childId)!.push(parentId);
   });
 
+  // 부부 관계(husband/wife)가 별도로 등록되지 않았더라도, 한 자녀에게 부모 두 명이
+  // 함께 기록되어 있으면 실질적으로 부부이므로 배치가 흩어지지 않도록 부부로 간주한다.
+  // (father/mother 로우 중 하나만 있는 것이 원칙이지만, 재혼/누락 등으로 둘 다 있는
+  // 경우가 실제로 존재하며, 이 경우 두 부모 중 하나가 배우자 맵에 없으면 "떠돌이 노드"가 된다)
+  childParentsMap.forEach(parents => {
+    if (parents.length !== 2) return;
+    const [a, b] = parents;
+    if (!coupleMap.has(a) && !coupleMap.has(b)) {
+      coupleMap.set(a, b);
+      coupleMap.set(b, a);
+      couples.add([a, b].sort().join('|'));
+    }
+  });
+
   const hasParentInTree = (pid: string) => filteredRels.some(r =>
     (r.person_id === pid && (r.relation_type === 'son' || r.relation_type === 'daughter')) ||
     (r.related_person_id === pid && (r.relation_type === 'father' || r.relation_type === 'mother'))
   );
-
-  const debugTargets = ['박부자','박정희','박영희','박노수','박청뢰'];
 
   childParentsMap.forEach((parents, childId) => {
     let selectedParent: string;
@@ -215,15 +241,6 @@ export function buildTreeData(
     }
     const repParentId = getRepId(selectedParent);
 
-    // DEBUG
-    const childName = persons.find(p => p.id === childId)?.name;
-    if (debugTargets.includes(childName ?? '')) {
-      const parentName = persons.find(p => p.id === selectedParent)?.name;
-      const repName = persons.find(p => p.id === repParentId)?.name;
-      const allParentNames = parents.map(p => persons.find(x => x.id === p)?.name);
-      console.log(`[CHILD] ${childName} | parents=${JSON.stringify(allParentNames)} | selected=${parentName} | rep=${repName}`);
-    }
-
     if (!childrenOf.has(repParentId)) childrenOf.set(repParentId, new Set());
     childrenOf.get(repParentId)!.add(childId);
     if (!parentsOf.has(childId)) parentsOf.set(childId, new Set());
@@ -234,7 +251,7 @@ export function buildTreeData(
   filteredPersons.forEach(p => personMap.set(p.id, p));
 
   const getBirthYear = (id: string): number => {
-    return personMap.get(id)?.birth_year ?? 9999;
+    return effectiveBirthYear(personMap.get(id)?.birth_year);
   };
 
   const familyChildren = new Map<string, Set<string>>();
@@ -360,7 +377,7 @@ export function buildTreeData(
     });
   };
 
-  const sortedRoots = [...roots].sort((a, b) => (a.birth_year ?? 9999) - (b.birth_year ?? 9999));
+  const sortedRoots = [...roots].sort((a, b) => effectiveBirthYear(a.birth_year) - effectiveBirthYear(b.birth_year));
 
   let curX = NODE_W;
   sortedRoots.forEach(root => {

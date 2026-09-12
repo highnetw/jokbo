@@ -54,6 +54,10 @@ export default function AddPerson() {
       alert('이름은 필수입니다!');
       return;
     }
+    if (form.birth_year && parseInt(form.birth_year) <= 0) {
+      alert('출생연도는 1 이상이어야 합니다!');
+      return;
+    }
     setLoading(true);
 
     let photo_url = null;

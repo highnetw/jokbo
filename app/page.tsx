@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/supabase';
+import { effectiveBirthYear, isKnownYear } from '@/lib/treeBuilder';
 import Link from 'next/link';
 
 type Person = {
@@ -24,11 +25,12 @@ export default function Home() {
   }, []);
 
   const fetchPersons = async () => {
-    const { data } = await supabase
-      .from('jokbo_persons')
-      .select('id, name, gender, birth_year, death_year, photo_url, occupation')
-      .order('birth_year', { ascending: true });
-    setPersons(data || []);
+    const data = await fetchAllRows<Person>(
+      'jokbo_persons',
+      'id, name, gender, birth_year, death_year, photo_url, occupation'
+    );
+    data.sort((a, b) => effectiveBirthYear(a.birth_year) - effectiveBirthYear(b.birth_year));
+    setPersons(data);
     setLoading(false);
   };
 
@@ -91,8 +93,8 @@ export default function Home() {
                   </div>
                   <h2 className="font-bold text-amber-900 text-center text-lg">{person.name}</h2>
                   <p className="text-amber-600 text-center text-sm">
-                    {person.birth_year && `${person.birth_year}년생`}
-                    {person.death_year && ` ~ ${person.death_year}`}
+                    {isKnownYear(person.birth_year) && `${person.birth_year}년생`}
+                    {person.death_year != null && ` ~ ${isKnownYear(person.death_year) ? person.death_year : '?'}`}
                   </p>
                   {person.occupation && (
                     <p className="text-amber-500 text-center text-xs mt-1">{person.occupation}</p>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -16,7 +16,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { PersonNode, nodeTypes } from '@/components/PersonNode';
-import { buildTreeData } from '@/lib/treeBuilder';
+import { buildTreeData, PersonRow, RelRow } from '@/lib/treeBuilder';
 
 export default function CenterTreePage() {
   const params = useParams();
@@ -28,14 +28,16 @@ export default function CenterTreePage() {
   const [centerName, setCenterName] = useState('');
 
   const build = useCallback(async () => {
-    const { data: persons } = await supabase
-      .from('jokbo_persons')
-      .select('id, name, gender, birth_year, death_year, photo_url, family_tree_ids');
-    const { data: rels } = await supabase
-      .from('jokbo_relationships')
-      .select('person_id, related_person_id, relation_type');
+    const persons = await fetchAllRows<PersonRow>(
+      'jokbo_persons',
+      'id, name, gender, birth_year, death_year, photo_url, family_tree_ids'
+    );
+    const rels = await fetchAllRows<RelRow>(
+      'jokbo_relationships',
+      'person_id, related_person_id, relation_type'
+    );
 
-    if (!persons || !rels) { setLoading(false); return; }
+    if (persons.length === 0 || rels.length === 0) { setLoading(false); return; }
 
     const center = persons.find(p => p.id === centerId);
     if (center) setCenterName(center.name);

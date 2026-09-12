@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/supabase';
 import Link from 'next/link';
 import {
   ReactFlow,
@@ -44,31 +44,18 @@ function TreeInner() {
   // 최초 1회 DB에서 전체 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
-      const { data: persons } = await supabase
-        .from('jokbo_persons')
-        .select('id, name, gender, birth_year, death_year, photo_url, family_tree_ids');
+      const persons = await fetchAllRows<PersonRow>(
+        'jokbo_persons',
+        'id, name, gender, birth_year, death_year, photo_url, family_tree_ids'
+      );
+      const allRelsData = await fetchAllRows<RelRow>(
+        'jokbo_relationships',
+        'person_id, related_person_id, relation_type'
+      );
 
-      // fetchData 함수 안에서 persons 받은 직후에 추가
-      console.log('persons sample:', persons?.slice(0, 3));
-
-      // 1000개 제한 우회: 페이지네이션으로 전체 로드
-      let allRelsData: RelRow[] = [];
-      let from = 0;
-      const pageSize = 1000;
-      while (true) {
-        const { data: relsPage } = await supabase
-          .from('jokbo_relationships')
-          .select('person_id, related_person_id, relation_type')
-          .range(from, from + pageSize - 1);
-        if (!relsPage || relsPage.length === 0) break;
-        allRelsData = [...allRelsData, ...relsPage];
-        if (relsPage.length < pageSize) break;
-        from += pageSize;
-      }
-
-      if (persons && allRelsData.length > 0) {
-        setAllPersons(persons as PersonRow[]);
-        setAllRels(allRelsData as RelRow[]);
+      if (persons.length > 0 && allRelsData.length > 0) {
+        setAllPersons(persons);
+        setAllRels(allRelsData);
       }
       setLoading(false);
     };
